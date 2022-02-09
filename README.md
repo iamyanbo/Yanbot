@@ -1,0 +1,2 @@
+# Yanbot
+A Discord bot
