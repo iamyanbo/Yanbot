@@ -23,7 +23,7 @@ class main_commands(commands.Cog):
     async def disconnect(self, ctx):
         vc = ctx.author.voice.channel if ctx.author.voice is not None else None
         if vc is None:
-            await ctx.channel.send('I am not in a voice channel.')
+            await ctx.channel.send('You are not in a voice channel.')
             return
         await ctx.voice_client.disconnect()
         del self.players[ctx.guild.id]
@@ -137,6 +137,8 @@ class main_commands(commands.Cog):
             player.stop()
             self.skip_next_callback = True
             await ctx.send('Stopped.')
+        else:
+            await ctx.send('Nothing is playing.')
             
     @commands.command(name = 'skip', aliases = ['s'])
     async def skip(self, ctx):
