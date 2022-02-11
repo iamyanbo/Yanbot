@@ -1,7 +1,6 @@
 import time
 import discord
 from discord.ext import commands
-from yt_dlp import YoutubeDL
 import asyncio
 import util
 
@@ -18,7 +17,7 @@ class main_commands(commands.Cog):
     
     @commands.command(name='help', aliases = ['h'])
     async def help(self, ctx):
-        await ctx.channel.send('```I am Yanbot, a Discord bot made by Yanbo.\n')
+        await ctx.channel.send('```I am Yanbot, a Discord bot made by Yanbo.\n```')
         
     @commands.command(name = 'disconnect', aliases = ['dc'])
     async def disconnect(self, ctx):
@@ -58,6 +57,7 @@ class main_commands(commands.Cog):
         if self.players[ctx.guild.id].is_playing():
             self.players[ctx.guild.id].stop()
         loop = asyncio.get_running_loop()
+
         def handle_next(error):
             if self.skip_next_callback:
                 self.skip_next_callback = False
@@ -93,7 +93,7 @@ class main_commands(commands.Cog):
             results = list(search['entries'])
             url = results[0]['url']
             self.playlist_google.append(url)
-            self.playlist_ty.append('https://youtu.be/{}'.format(results[0]['id']))
+            self.playlist_yt.append('https://youtu.be/{}'.format(results[0]['id']))
         if len(self.playlist_yt) > 1:
             await ctx.send('{} songs added to the playlist.'.format(len(self.playlist_yt)))
         elif len(self.playlist_yt) == 1:
@@ -130,7 +130,7 @@ class main_commands(commands.Cog):
     
     @commands.command(name = 'stop')
     async def stop(self, ctx):
-        if self.connect_vc(ctx) is False:
+        if await self.connect_vc(ctx) is False:
             return await ctx.send('You are not in a voice channel.')
         player = self.players[ctx.guild.id]
         if player.is_playing():
@@ -138,17 +138,19 @@ class main_commands(commands.Cog):
             self.skip_next_callback = True
             await ctx.send('Stopped.')
             
-    @commands.command(name = 'skip')
+    @commands.command(name = 'skip', aliases = ['s'])
     async def skip(self, ctx):
-        if self.connect_vc(ctx) is False:
+        if await self.connect_vc(ctx) is False:
             return await ctx.send('You are not in a voice channel.')
-        player = self.players[ctx.guild.id]
-        if 0 >= len(self.playlist_yt):
-            await ctx.send('End of queue.')
         else:
-            self.playlist_google.pop(0)
-            self.playlist_yt.pop(0)
-            player.play(self.playlist[0])
+            if 0 == len(self.playlist_yt):
+                return await ctx.send('End of queue.')
+            elif len(self.playlist_yt) == 1:
+                    self.playlist_google.pop(0)
+                    self.playlist_yt.pop(0)
+                    self.players[ctx.guild.id].stop()
+            else:
+                await self.play_next(ctx)
             
     @commands.command(name = 'queue', aliases = ['q'])
     async def queue(self, ctx):
@@ -157,19 +159,7 @@ class main_commands(commands.Cog):
             await ctx.channel.send('\n'.join(self.playlist_yt))
         except:
             await ctx.channel.send('None.')
-    
-    @commands.command(name = 'skip', aliases = ['s'])
-    async def skip(self, ctx):
-        if await self.connect_vc(ctx):
-            if len(self.playlist_yt) <= 1:
-                self.playlist_google.pop(0)
-                self.playlist_yt.pop(0)
-                self.players[ctx.guild.id].stop()
-            else:
-                await self.play_next(ctx)
-        else:
-            await ctx.channel.send('You are not in a voice channel.')
-    
+            
     @commands.command()
     async def wheres(self, ctx, message):
         if message == '<@!361913675872731136>':
@@ -188,7 +178,7 @@ class main_commands(commands.Cog):
             user = '<@!194955178770825216>'
             await ctx.channel.send(f'{user} is being sus and needs to be paused')
 
-    @commands.command(name = 'revive', aliases = ['r'])
+    @commands.command(name = 'revive')
     async def revive(self, ctx, member: discord.Member):
         try:
             voice_channel = ctx.guild.voice_channels

@@ -16,14 +16,16 @@ async def youtube_extract_info(url, playlist = False):
             if playlist:
                 opts = {'default_search': 'auto',
                 'format' :'--yes-playlist, bestaudio',
-                'forceduration': True}
+                'forceduration': True,
+                '--rm-cache-dir': True}
                 with youtube_dl.YoutubeDL(opts) as ydl:
                     return ydl.extract_info(_url, download=False)
             else:
                 opts = {'default_search': 'auto',
                 'format' :'--no-playlist, bestaudio',
                 'forceduration': True,
-                'noplaylist': True}
+                'noplaylist': True,
+                '--rm-cache-dir': True}
                 with youtube_dl.YoutubeDL(opts) as ydl:
                     return ydl.extract_info(_url, download=False)
         except HTTPError:
