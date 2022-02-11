@@ -1,7 +1,6 @@
 import time
 import discord
 from discord.ext import commands
-from yt_dlp import YoutubeDL
 import asyncio
 import util
 
