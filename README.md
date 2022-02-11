@@ -1,5 +1,5 @@
 # Yanbot
-A Discord bot I made for my boys discord\
+A Discord bot I made for my boys\
 Commands:\
 .play [url/song name]: plays the given song\
 .skip: skips the current song\
