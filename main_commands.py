@@ -92,7 +92,7 @@ class main_commands(commands.Cog):
             results = list(search['entries'])
             url = results[0]['url']
             self.playlist_google.append(url)
-            self.playlist_ty.append('https://youtu.be/{}'.format(results[0]['id']))
+            self.playlist_yt.append('https://youtu.be/{}'.format(results[0]['id']))
         if len(self.playlist_yt) > 1:
             await ctx.send('{} songs added to the playlist.'.format(len(self.playlist_yt)))
         elif len(self.playlist_yt) == 1:
