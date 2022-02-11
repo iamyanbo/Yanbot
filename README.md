@@ -9,4 +9,4 @@ Commands:\
 .pause: pauses the bot\
 .resume: resumes the bot\
 .stop: stopes the bot\
-.disconnect: disconnects the bot\
+.disconnect: disconnects the bot
