@@ -1,5 +1,6 @@
 # Yanbot
 A Discord bot I made for my boys\
+This was also done with help from GitHub Co-pilot, it helped me write a few simple commands, but overall it was a pretty cool experience.\
 Commands:\
 .play [url/song name]: plays the given song\
 .skip: skips the current song\
