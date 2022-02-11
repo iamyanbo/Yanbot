@@ -1,4 +1,5 @@
 import time
+from urllib.error import HTTPError
 import discord
 from discord.ext import commands
 import asyncio
@@ -48,25 +49,29 @@ class main_commands(commands.Cog):
         return await self.play_song(ctx)
     
     async def play_song(self, ctx):
-        url = self.playlist_google[0]
-        await ctx.channel.send(f'Now playing: {self.playlist_yt[0]}')
-        FFMPEG_OPTIONS = {'before_options':'-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                                                        'options': '-vn'}
-        source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-        self.skip_next_callback = True
-        if self.players[ctx.guild.id].is_playing():
-            self.players[ctx.guild.id].stop()
-        loop = asyncio.get_running_loop()
+        try:
+            url = self.playlist_google[0]
+            await ctx.channel.send(f'Now playing: {self.playlist_yt[0]}')
+            FFMPEG_OPTIONS = {'before_options':'-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+                                                            'options': '-vn'}
+            source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
+            self.skip_next_callback = True
+            if self.players[ctx.guild.id].is_playing():
+                self.players[ctx.guild.id].stop()
+            loop = asyncio.get_running_loop()
 
-        def handle_next(error):
-            if self.skip_next_callback:
-                self.skip_next_callback = False
-                return
-            asyncio.run_coroutine_threadsafe(self.play_next(ctx), loop)
-        vc = self.players[ctx.guild.id]
-        vc.play(source, after=handle_next)
-        await asyncio.sleep(1)
-        self.skip_next_callback = False
+            def handle_next(error):
+                if self.skip_next_callback:
+                    self.skip_next_callback = False
+                    return
+                asyncio.run_coroutine_threadsafe(self.play_next(ctx), loop)
+            vc = self.players[ctx.guild.id]
+            vc.play(source, after=handle_next)
+            await asyncio.sleep(1)
+            self.skip_next_callback = False
+        except HTTPError:
+            await ctx.channel.send('The song you requested is not available.')
+            await self.play_next(ctx)
 
     @commands.command(name = 'play', aliases = ['p'])
     async def play(self, ctx, *message):
@@ -97,13 +102,12 @@ class main_commands(commands.Cog):
         if len(self.playlist_yt) > 1:
             await ctx.send('{} songs added to the playlist.'.format(len(self.playlist_yt)))
         elif len(self.playlist_yt) == 1:
-            await ctx.send('Queued {}.'.format(self.playlist_yt[0]))
+            msg = await ctx.send('Queued {}.'.format(self.playlist_yt[0]))
+            await msg.edit(embed = None)
         else:
             return await ctx.send('No songs added to the queue.')
         #check if player is playing
-        if player.is_playing():
-            return await ctx.send('Already playing.')
-        else:
+        if not player.is_playing():
             await self.play_song(ctx)
         
     @commands.command(name = 'pause')
