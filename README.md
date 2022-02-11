@@ -1,7 +1,7 @@
 # Yanbot
 A Discord bot I made for my boys discord
 Commands:
-.play [url/song name]: plays the given song
+.play [url/song name]: plays the given song\n
 .skip: skips the current song
 .queue: displays the list of songs queued
 .revive [@user]: sends someone between voice channels when they are defened to forcefully notifiy them
