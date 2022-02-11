@@ -117,7 +117,7 @@ class main_commands(commands.Cog):
         else:
             await ctx.send('Nothing is playing.')
     
-    @commands.command(name = 'resume', aliases = ['r'])
+    @commands.command(name = 'resume')
     async def resume(self, ctx):
         if await self.connect_vc(ctx) is False:
             return await ctx.send('You are not in a voice channel.')
