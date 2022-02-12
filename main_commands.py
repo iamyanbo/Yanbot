@@ -69,9 +69,10 @@ class main_commands(commands.Cog):
             vc.play(source, after=handle_next)
             await asyncio.sleep(1)
             self.skip_next_callback = False
-        except HTTPError:
-            await ctx.channel.send('The song you requested is not available.')
-            await self.play_next(ctx)
+        except HTTPError as err:
+            if err.code == 403:
+                await ctx.channel.send('The song you requested is not available.')
+                await self.play_next(ctx)
 
     @commands.command(name = 'play', aliases = ['p'])
     async def play(self, ctx, *message):
