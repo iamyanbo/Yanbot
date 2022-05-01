@@ -1,9 +1,13 @@
+from asyncore import loop
+from threading import Timer
 import time
 from urllib.error import HTTPError
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import asyncio
 import util
+import requests
+import json
 
 class main_commands(commands.Cog):
     def __init__(self, client) -> None:
@@ -15,7 +19,15 @@ class main_commands(commands.Cog):
         #i would make this into a dictionary with the server id as the key
         self.playlist_yt = []
         self.playlist_google = []
-    
+        self.bazaar.start()
+        self.delete_items.start()
+        self.items = []
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='The Boys .help'))
+        print('Bot is ready.')   
+        
     @commands.command(name='help', aliases = ['h'])
     async def help(self, ctx):
         await ctx.channel.send('```I am Yanbot, a Discord bot made by Yanbo.\n```')
@@ -205,6 +217,47 @@ class main_commands(commands.Cog):
             await member.move_to(voice_channel[0])
         except:
             await ctx.channel.send('person not in vc')
+            
+    
+            
+    @tasks.loop(seconds = 10)
+    async def bazaar(self):
+    #fetch data from hypixel skyblock bazaar api
+        response = requests.get('https://api.hypixel.net/skyblock/bazaar?key=065f77c0-ef85-44e9-8303-aa8e3dd6a81b').json()
+        channel = self.client.get_channel(207569089059618816)
+        for ele in response['products']:
+            try:
+                if ele not in self.items:
+                    quick_sell = response['products'][ele]['quick_status']['sellPrice']
+                    quick_buy = response['products'][ele]['quick_status']['buyPrice']
+                    lowest_sell = response['products'][ele]['sell_summary'][0]['pricePerUnit']
+                    lowest_buy = response['products'][ele]['buy_summary'][0]['pricePerUnit']
+                    sell_volume = response['products'][ele]['quick_status']['sellVolume']
+                    buy_volume = response['products'][ele]['quick_status']['buyVolume']
+                    if lowest_buy / lowest_sell > 2:
+                        if sell_volume > 200000 and buy_volume > 200000:
+                            if quick_buy > 700:
+                                if quick_sell / lowest_sell > 2:
+                                    await channel.send(f'{ele} price is below average with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7 day quick buy\n')
+                                    self.items.append(ele)
+                                elif lowest_buy / quick_buy > 2:
+                                    await channel.send(f'{ele} price is above average with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7 day quick buy\n')
+                                    self.items.append(ele)
+                                else:
+                                    await channel.send(f'{ele} is a great flip with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7 day quick buy\n')
+                                    self.items.append(ele)     
+                    elif lowest_buy / lowest_sell > 1.1:
+                        if sell_volume > 200000 and buy_volume > 200000:
+                            if quick_buy > 700:
+                                await channel.send(f'{ele} is a good flip with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7day quick buy\n')
+                                self.items.append(ele)
+            except:
+                continue
+        
+    @tasks.loop(seconds = 3600)
+    async def delete_items(self):
+        self.items.clear()
+        
 def setup(client):
     client.add_cog(main_commands(client))
     
