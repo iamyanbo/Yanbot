@@ -6,10 +6,10 @@ import discord
 from discord.ext import commands, tasks
 import asyncio
 import util
-import requests
-import json
+from selenium import webdriver
+from bs4 import BeautifulSoup
 
-class main_commands(commands.Cog):
+class Main_commands(commands.Cog):
     def __init__(self, client) -> None:
         super().__init__()
         self.client = client
@@ -19,16 +19,12 @@ class main_commands(commands.Cog):
         #i would make this into a dictionary with the server id as the key
         self.playlist_yt = []
         self.playlist_google = []
-        self.bazaar.start()
-        self.delete_items.start()
-        self.items = []
-
+        
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='The Boys .help'))
-        print('Bot is ready.')   
-        
-    @commands.command(name='help', aliases = ['h'])
+        print('Bot is online.')
+                
+    @commands.command(name = 'help', aliases = ['h'])
     async def help(self, ctx):
         await ctx.channel.send('```I am Yanbot, a Discord bot made by Yanbo.\n```')
         
@@ -219,46 +215,60 @@ class main_commands(commands.Cog):
         except:
             await ctx.channel.send('person not in vc')
             
+    @commands.command(name = "flips")
+    async def flips(self, ctx):
+        data, driver = await self.get_data()
+        reasonable_flips = await self.get_reasonable_flips(data)
+        data_str = ""
+        for dic in reasonable_flips:
+            data_str += f"{dic.get('Item name')}\n"
+            data_str += f"Buy price: {dic.get('Buy')}\n"
+            data_str += f"Buy volume: {dic.get('1-hr instabuys')}\n"
+            data_str += f"Sell: {dic.get('Sell')}\n"
+            data_str += f"Sell volume: {dic.get('1-hr instasells')}\n"
+            data_str += f"CPR: {dic.get('Coins per hour')}\n\n"
+        driver.quit()
+        await ctx.send(data_str)
+        
+    async def get_data(self):
+        url = "https://www.skyblock.bz/flips"
+        print("Getting data from " + url)
+        driver = webdriver.Edge()
+        driver.get(url)
+        time.sleep(1)
+
+        html = driver.page_source
+        soup = BeautifulSoup(html, "html.parser")
+        cards = soup.find_all("div", class_="card svelte-ln9euk")
+
+        data = []
+        for i in range(0, 35):
+            item_name = cards[i].find("div", class_="item-name svelte-ln9euk")
+            if(item_name):
+                item_info = cards[i].find("p", class_="card_menu svelte-ln9euk")
+                item_split = item_info.text.split(" ")
+                temp = {}
+                item_info_names = ["Item name", "Buy", "1-hr instabuys", "Sell", "1-hr instasells", "Margin", "Coins per hour"]
+                temp[item_info_names[0]] = item_name.text
+                i = 1
+                for item in item_split:
+                    new_item = item.replace(",", "")
+                    try:
+                        temp[item_info_names[i]] = float(new_item)
+                        i += 1
+                    except:
+                        pass
+                data.append(temp)
+                
+        return data, driver
     
-            
-    @tasks.loop(seconds = 10)
-    async def bazaar(self):
-    #fetch data from hypixel skyblock bazaar api
-        response = requests.get('https://api.hypixel.net/skyblock/bazaar?key=065f77c0-ef85-44e9-8303-aa8e3dd6a81b').json()
-        channel = self.client.get_channel(207569089059618816)
-        for ele in response['products']:
-            try:
-                if ele not in self.items:
-                    quick_sell = response['products'][ele]['quick_status']['sellPrice']
-                    quick_buy = response['products'][ele]['quick_status']['buyPrice']
-                    lowest_sell = response['products'][ele]['sell_summary'][0]['pricePerUnit']
-                    lowest_buy = response['products'][ele]['buy_summary'][0]['pricePerUnit']
-                    sell_volume = response['products'][ele]['quick_status']['sellVolume']
-                    buy_volume = response['products'][ele]['quick_status']['buyVolume']
-                    if lowest_buy / lowest_sell > 2:
-                        if sell_volume > 200000 and buy_volume > 200000:
-                            if quick_buy > 700:
-                                if quick_sell / lowest_sell > 2:
-                                    await channel.send(f'{ele} price is below average with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7 day quick buy\n')
-                                    self.items.append(ele)
-                                elif lowest_buy / quick_buy > 2:
-                                    await channel.send(f'{ele} price is above average with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7 day quick buy\n')
-                                    self.items.append(ele)
-                                else:
-                                    await channel.send(f'{ele} is a great flip with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7 day quick buy\n')
-                                    self.items.append(ele)     
-                    elif lowest_buy / lowest_sell > 1.1:
-                        if sell_volume > 200000 and buy_volume > 200000:
-                            if quick_buy > 700:
-                                await channel.send(f'{ele} is a good flip with \n{lowest_sell} sell \n{lowest_buy} buy \n{quick_sell} 7 day quick sell \n{quick_buy} 7day quick buy\n')
-                                self.items.append(ele)
-            except:
-                continue
+    async def get_reasonable_flips(self, data):
+        reasonable_flips = []
+        for flip in data:
+            if(flip["1-hr instabuys"] > 100 and flip["1-hr instasells"] > 100):
+                reasonable_flips.append(flip)
+        return reasonable_flips
         
-    @tasks.loop(seconds = 3600)
-    async def delete_items(self):
-        self.items.clear()
-        
-def setup(client):
-    client.add_cog(main_commands(client))
+async def setup(bot):
+    await bot.add_cog(Main_commands(bot))
     

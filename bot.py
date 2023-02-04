@@ -1,15 +1,22 @@
+import asyncio
 import os
 import discord
 from dotenv import load_dotenv 
 from discord.ext import commands
-import main_commands
-cogs = [main_commands]
+from discord import Intents
 
-client = commands.Bot(command_prefix = '.')
+intents= Intents.all()
+client = commands.Bot(command_prefix=".", intents=intents)
 
-for i in range(len(cogs)):
-    cogs[i].setup(client)
+async def load():
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            await client.load_extension(f'cogs.{filename[:-3]}')
+            
+async def main():
+    await load()
+    load_dotenv()
+    token = os.getenv('DISCORD_TOKEN')
+    await client.start(token)
 
-load_dotenv()
-token = os.getenv('DISCORD_TOKEN')
-client.run(token)
+asyncio.run(main())
