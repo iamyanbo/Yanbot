@@ -19,10 +19,21 @@ class Main_commands(commands.Cog):
         #i would make this into a dictionary with the server id as the key
         self.playlist_yt = []
         self.playlist_google = []
+        self.watching_list = []
+        
+    @commands.command(name='rem')
+    async def rem(self, ctx, *args):
+        self.watching_list = list(args)
+        await ctx.send("List updated.")
+        
+    @commands.command(name='print')
+    async def print(self, ctx):
+        await ctx.send(self.watching_list)
         
     @commands.Cog.listener()
     async def on_ready(self):
         print('Bot is online.')
+        print(self.temp)
                 
     @commands.command(name = 'help', aliases = ['h'])
     async def help(self, ctx):
