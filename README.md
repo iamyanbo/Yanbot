@@ -14,5 +14,6 @@ Commands:\
 
 
 TODO:
-- better logic to determine if an item is really spiking or not
-- make smart logic/command to not notify user every loop
+- Better logic to determine if an item is really spiking or not ✅
+- Make smart logic/command to not notify user every loop ✅
+- Fix youtube dl with new discord.py
