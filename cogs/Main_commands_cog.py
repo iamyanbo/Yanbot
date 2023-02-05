@@ -1,4 +1,3 @@
-from asyncore import loop
 from threading import Timer
 import time
 from urllib.error import HTTPError
@@ -20,10 +19,15 @@ class Main_commands(commands.Cog):
         self.playlist_yt = []
         self.playlist_google = []
         self.watching_list = []
-        
+
     @commands.command(name='rem')
     async def rem(self, ctx, *args):
         self.watching_list = list(args)
+        await ctx.send("List updated.")
+        
+    @commands.command(name='add')
+    async def add(self, ctx, *args):
+        self.watching_list.extend(list(args))
         await ctx.send("List updated.")
         
     @commands.command(name='print')
@@ -33,7 +37,7 @@ class Main_commands(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print('Bot is online.')
-        print(self.temp)
+        self.spike_watcher.start()       
                 
     @commands.command(name = 'help', aliases = ['h'])
     async def help(self, ctx):
@@ -240,6 +244,17 @@ class Main_commands(commands.Cog):
             data_str += f"CPR: {dic.get('Coins per hour')}\n\n"
         driver.quit()
         await ctx.send(data_str)
+        
+    @tasks.loop(seconds=60)
+    async def spike_watcher(self):
+        channel = await self.client.fetch_channel(1071237492663128124) # channel id goes here, this is the channel id for the test server
+        data, driver = await self.get_data()
+        # it is reasonable to assume that the first 15 items includes the spikes
+        for item in self.watching_list:
+            for i in range(0, 15):
+                item_name = data[i].get("Item name")
+                if item in item_name.lower():
+                    await channel.send(f"{item_name} is spiking!")
         
     async def get_data(self):
         url = "https://www.skyblock.bz/flips"
