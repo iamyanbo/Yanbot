@@ -11,3 +11,8 @@ Commands:\
 .resume: resumes the bot\
 .stop: stopes the bot\
 .disconnect: disconnects the bot
+
+
+TODO:
+- better logic to determine if an item is really spiking or not
+- make smart logic/command to not notify user every loop
